@@ -61,7 +61,6 @@ export default function Contact() {
             throw new Error(`HTTP Error: ${response.status}`);
           }
 
-          // Response is sometimes non json so we do this
           return response.json().catch(() => null);
         })
         .then(() => {
