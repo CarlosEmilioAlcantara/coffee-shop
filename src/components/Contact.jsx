@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, useInView, useAnimation } from "motion/react";
-import emailjs from "@emailjs/browser";
 import Popup from "./Popup";
 
 export default function Contact() {
@@ -13,7 +12,6 @@ export default function Contact() {
   const name = useRef("");
   const email = useRef("");
   const message = useRef("");
-  const date = new Date();
 
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -35,31 +33,51 @@ export default function Contact() {
       message.current.value.trim().length === 0
     ) {
       setTitle("Email Sent Unsuccessfully!");
-      setNotification("Have you filled all inputs?")
+      setNotification("Have you filled all inputs?");
       setIsOpen(true);
       setIsError(true);
     } else {
-      emailjs
-        .sendForm("gmail_service", "contact_form", form.current, {
-          publicKey: "qfpX8zeDmabAOnUQx",
-        })
-        .then(
-          () => {
-            setTitle("Email Sent Successfully!");
-            setNotification("You're message has been sent.")
-            setIsOpen(true);
-            setIsError(false);
-            form.current.reset();
+      fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: "gmail_service",
+          template_id: "contact_form",
+          user_id: "qfpX8zeDmabAOnUQx",
+          template_params: {
+            date: new Date().toLocaleDateString("en-PH", {
+              timezone: "Asia/Manila",
+            }),
+            user_name: name.current.value.trim(),
+            user_email: email.current.value.trim(),
+            message: message.current.value.trim(),
           },
-          (error) => {
-            setTitle("Email Sent Unsuccessfully!");
-            setNotification("An error has occurred.")
-            setIsOpen(true);
-            setIsError(true);
-            form.current.reset();
-            console.error("ERROR:", error.text);
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
           }
-        );
+
+          // Response is sometimes non json so we do this
+          return response.json().catch(() => null);
+        })
+        .then(() => {
+          setTitle("Email Sent Successfully!");
+          setNotification("You're message has been sent.");
+          setIsOpen(true);
+          setIsError(false);
+          form.current.reset();
+        })
+        .catch((error) => {
+          setTitle("Email Sent Unsuccessfully!");
+          setNotification("An error has occurred.");
+          setIsOpen(true);
+          setIsError(true);
+          console.error("ERROR:", JSON.stringify(error));
+        });
     }
 
     setTimeout(() => {
@@ -74,7 +92,7 @@ export default function Contact() {
       className="flex justify-center pb-16 bg-green md:pb-12"
     >
       <motion.div
-        className="flex flex-col justify-between items-center gap-10 px-2 py-6 max-w-[1240px] text-white md:flex-row lg:gap-36 md:py-10 xl:p-16"
+        className="flex flex-col justify-between items-center gap-10 px-2 py-6 max-w-[1240px] text-white md:flex-row lg:gap-36 xl:p-16"
         variants={{
           hidden: { opacity: 0, y: 75 },
           visible: { opacity: 1, y: 0 },
@@ -107,7 +125,6 @@ export default function Contact() {
             autoComplete="off"
             className="flex flex-col items-center gap-3"
           >
-            <input type="hidden" name="date" value={date} />
             <div className="flex flex-col">
               <label htmlFor="name">Name</label>
               <input

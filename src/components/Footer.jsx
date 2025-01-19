@@ -42,6 +42,7 @@ export default function Footer() {
       transition={{ duration: 0.75 }}
     >
       <h3>Copyright 2025</h3>
+
       <a
         href="https://www.flaticon.com/free-icons/matcha"
         title="matcha icons"
